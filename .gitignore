@@ -46,14 +46,14 @@ docker-compose.override.yml
 
 # --- Coverage / test artifacts ---
 coverage/
-
+output.txt
 # --- Terraform ---
-infra-aws/terraform/.terraform/
-infra-aws/terraform/.terraform.lock.hcl
-infra-aws/terraform/*.tfstate
-infra-aws/terraform/*.tfstate.*
-infra-aws/terraform/*.tfplan
-infra-aws/terraform/tfplan
-infra-aws/terraform/crash.log
-infra-aws/terraform/*.tfvars
-!infra-aws/terraform/*.tfvars.example
+/terraform/.terraform/
+/terraform/.terraform.lock.hcl
+/terraform/*.tfstate
+/terraform/*.tfstate.*
+/terraform/*.tfplan
+/terraform/tfplan
+/terraform/crash.log
+/terraform/*.tfvars
+!/terraform/*.tfvars.example

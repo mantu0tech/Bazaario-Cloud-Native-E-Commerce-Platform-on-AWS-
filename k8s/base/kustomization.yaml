@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: bazaario
+
+resources:
+  - namespace.yaml
+  - external-secret.yaml
+  - backend.yaml
+  - frontend.yaml
+  - ingress.yaml
+
+# CI (.github/workflows/cd.yml) runs `kustomize edit set image` to point these
+# at the freshly-built ECR image tags, then commits the change. ArgoCD detects
+# the git change and syncs it to the cluster - this is the GitOps handoff.
+images:
+  - name: <ECR_BACKEND_REPO_URL>
+    newName: 256097482448.dkr.ecr.ap-south-1.amazonaws.com/bazaario-backend
+    newTag: v1
+  - name: <ECR_FRONTEND_REPO_URL>
+    newName: 256097482448.dkr.ecr.ap-south-1.amazonaws.com/bazaario-frontend
+    newTag: v1

@@ -110,7 +110,7 @@ module "rds" {
 module "secrets_manager" {
   source = "./modules/secrets-manager"
 
-  name        = local.name
+  name        = "${local.name}-app-secrets"
   db_host     = module.rds.endpoint
   db_port     = tostring(module.rds.port)
   db_name     = var.db_name
