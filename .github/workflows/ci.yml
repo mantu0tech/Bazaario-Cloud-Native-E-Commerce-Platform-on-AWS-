@@ -1,0 +1,93 @@
+name: CI - Build, Test, Push to ECR
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "k8s/**"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write # needed for OIDC auth to AWS (no long-lived keys)
+  contents: write # needed to commit the updated image tag back to the repo
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_BACKEND_REPO: bazaario-backend
+  ECR_FRONTEND_REPO: bazaario-frontend
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.vars.outputs.image_tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set image tag (short git SHA)
+        id: vars
+        run: echo "image_tag=$(echo $GITHUB_SHA | cut -c1-7)" >> "$GITHUB_OUTPUT"
+
+      # Uses GitHub's OIDC provider to assume an AWS role - no static AWS keys stored in GitHub
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::256097482448:role/github-actions-bazaario-ci
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # --- Backend ---
+      - name: Run backend syntax/dependency check
+        working-directory: backend
+        run: |
+          npm install --omit=dev
+          node --check server.js
+
+      - name: Build & push backend image
+        working-directory: backend
+        env:
+          REPO_URI: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_BACKEND_REPO }}
+          TAG: ${{ steps.vars.outputs.image_tag }}
+        run: |
+          docker build -t "$REPO_URI:$TAG" -t "$REPO_URI:latest" .
+          docker push "$REPO_URI:$TAG"
+          docker push "$REPO_URI:latest"
+
+      # --- Frontend ---
+      - name: Build & push frontend image
+        working-directory: frontend
+        env:
+          REPO_URI: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_FRONTEND_REPO }}
+          TAG: ${{ steps.vars.outputs.image_tag }}
+        run: |
+          docker build -t "$REPO_URI:$TAG" -t "$REPO_URI:latest" .
+          docker push "$REPO_URI:$TAG"
+          docker push "$REPO_URI:latest"
+
+      # --- GitOps handoff: update the manifest, commit it, ArgoCD auto-syncs the change ---
+      - name: Update image tags in k8s manifests
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          TAG: ${{ steps.vars.outputs.image_tag }}
+        run: |
+          curl -sLo /tmp/kustomize.tar.gz "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.4.3/kustomize_v5.4.3_linux_amd64.tar.gz"
+          tar -xzf /tmp/kustomize.tar.gz -C /tmp
+          cd k8s/base
+          /tmp/kustomize edit set image \
+            "<ECR_BACKEND_REPO_URL>=$REGISTRY/${{ env.ECR_BACKEND_REPO }}:$TAG" \
+            "<ECR_FRONTEND_REPO_URL>=$REGISTRY/${{ env.ECR_FRONTEND_REPO }}:$TAG"
+
+      - name: Commit updated manifests
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add k8s/base/kustomization.yaml
+          git diff --cached --quiet || git commit -m "ci: deploy image tag ${{ steps.vars.outputs.image_tag }}"
+          git push
