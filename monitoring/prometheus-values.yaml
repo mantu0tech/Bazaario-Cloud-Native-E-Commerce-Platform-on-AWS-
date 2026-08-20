@@ -1,0 +1,54 @@
+# Values for: helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -f monitoring/prometheus-values.yaml
+# See README-AWS.md Part 8 for the full install command.
+
+grafana:
+  enabled: true
+  adminPassword: "" # leave blank here - set via --set on the CLI or a sealed secret, never commit a real password
+  service:
+    type: ClusterIP
+  persistence:
+    enabled: true
+    size: 5Gi
+  defaultDashboardsEnabled: true
+
+prometheus:
+  prometheusSpec:
+    retention: 15d
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+
+# Scrape pods in the bazaario namespace that expose a /metrics endpoint.
+# The Node/Express backend doesn't expose Prometheus metrics out of the box -
+# see README-AWS.md Part 8 for the two-line change (prom-client) that adds one.
+additionalServiceMonitors:
+  - name: bazaario-backend
+    selector:
+      matchLabels:
+        app: backend
+    namespaceSelector:
+      matchNames:
+        - bazaario
+    endpoints:
+      - port: http
+        path: /metrics
+        interval: 30s
