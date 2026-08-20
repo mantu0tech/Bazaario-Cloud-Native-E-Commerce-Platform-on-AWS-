@@ -31,13 +31,7 @@ jobs:
       - name: Set image tag (short git SHA)
         id: vars
         run: echo "image_tag=$(echo $GITHUB_SHA | cut -c1-7)" >> "$GITHUB_OUTPUT"
-
-      # Uses GitHub's OIDC provider to assume an AWS role - no static AWS keys stored in GitHub
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::256097482448:role/github-actions-bazaario-ci
-          aws-region: ${{ env.AWS_REGION }}
+      
       - name: DEBUG - print actual OIDC token claims
         run: |
           IDTOKEN=$(curl -sSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
@@ -45,6 +39,14 @@ jobs:
           echo "$IDTOKEN" | cut -d. -f2 | base64 -d 2>/dev/null | jq .
 
           
+
+      # Uses GitHub's OIDC provider to assume an AWS role - no static AWS keys stored in GitHub
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::256097482448:role/github-actions-bazaario-ci
+          aws-region: ${{ env.AWS_REGION }}
+
       - name: Login to Amazon ECR
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
