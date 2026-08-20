@@ -18,7 +18,7 @@ spec:
       containers:
         - name: backend
           # CI/CD replaces this tag - see .github/workflows/ci.yml and k8s/base/kustomization.yaml
-          image: 256097482448.dkr.ecr.ap-south-1.amazonaws.com/bazaario-backend:v1
+          image: <ECR_BACKEND_REPO_URL>
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
