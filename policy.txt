@@ -13,7 +13,7 @@ cat > github-trust-policy.json << 'EOF'
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
         },
         "StringLike": {
-          "token.actions.githubusercontent.com:sub": "repo:mantu0tech/Bazaario-Cloud-Native-E-Commerce-Platform-on-AWS-:ref:refs/heads/main"
+          "token.actions.githubusercontent.com:sub": "repo:mantu0tech@120690932/Bazaario-Cloud-Native-E-Commerce-Platform-on-AWS-@1327516404:ref:refs/heads/main"
         }
       }
     }
