@@ -10,7 +10,7 @@ spec:
 
   source:
     # Replace with your actual GitHub repo URL
-    repoURL: https://github.com/<your-org>/<your-repo>.git
+    repoURL: https://github.com/mantu0tech/Bazaario-Cloud-Native-E-Commerce-Platform-on-AWS-.git
     targetRevision: main
     path: k8s/base
 

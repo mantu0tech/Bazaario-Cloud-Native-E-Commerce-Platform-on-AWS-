@@ -31,7 +31,7 @@ export default function Home() {
       <section className="mb-8 overflow-hidden rounded-3xl bg-brand-gradient p-8 text-white shadow-glow sm:p-12">
         <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-white/80"> E-Commerece · payments</p>
         <h1 className="max-w-xl font-display text-3xl font-extrabold leading-tight sm:text-4xl">
-          Shop the everyday essentials, in color.
+          Shop the everyday essentials, in color of your day to day life style.
         </h1>
         <p className="mt-3 max-w-lg text-white/90">
           Browse the catalog, add items to your cart, and check out.
